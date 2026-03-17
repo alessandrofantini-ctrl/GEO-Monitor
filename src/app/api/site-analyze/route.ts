@@ -101,6 +101,12 @@ export async function POST(req: NextRequest) {
       clearTimeout(timer);
       homepageHtml = await res.text();
       homepageText = extractText(homepageHtml);
+      console.log('\n════════════════════════════════════════');
+      console.log(`[site-analyze] HOMEPAGE TEXT (${homepageText.length} chars) — ${url}`);
+      console.log('════════════════════════════════════════');
+      console.log(homepageText.slice(0, 3000));
+      if (homepageText.length > 3000) console.log(`... [+${homepageText.length - 3000} chars troncati]`);
+      console.log('════════════════════════════════════════\n');
     } catch (err) {
       console.warn('[site-analyze] homepage fetch failed:', err);
       // WHY: se il fetch fallisce (sito down, timeout, CORS) non blocchiamo —
@@ -112,16 +118,21 @@ export async function POST(req: NextRequest) {
 
     if (homepageHtml) {
       const navLinks = extractNavLinks(homepageHtml, url);
+      console.log(`[site-analyze] NAV LINKS trovati (${navLinks.length}):`, navLinks);
 
       await Promise.allSettled(
         navLinks.map(async (link) => {
           try {
             const text = await fetchPageText(link);
             if (text.length > 100) {
+              console.log(`\n[site-analyze] SUBPAGE TEXT (${text.length} chars) — ${link}`);
+              console.log('────────────────────────────────────────');
+              console.log(text.slice(0, 1000));
+              if (text.length > 1000) console.log(`... [+${text.length - 1000} chars troncati]`);
               subpageTexts.push(`--- Pagina: ${link} ---\n${text.slice(0, 2000)}`);
             }
-          } catch {
-            // Ignora sottopagine non raggiungibili
+          } catch (err) {
+            console.warn(`[site-analyze] subpage fetch failed: ${link}`, err);
           }
         })
       );
@@ -139,6 +150,11 @@ export async function POST(req: NextRequest) {
     // WHY: se non siamo riusciti a fare scraping, GPT-4o lavora sull'URL —
     // meglio di niente ma meno preciso
     const hasRealContent = allContent.length > 200;
+    console.log(`\n[site-analyze] CONTESTO FINALE GPT-4o (${allContent.length} chars, hasRealContent=${hasRealContent})`);
+    console.log('════════════════════════════════════════');
+    console.log(allContent.slice(0, 2000));
+    if (allContent.length > 2000) console.log(`... [+${allContent.length - 2000} chars troncati]`);
+    console.log('════════════════════════════════════════\n');
 
     const system = `Sei un esperto di brand analysis. Analizza il contenuto del sito web fornito e restituisci SOLO un JSON valido con le seguenti chiavi:
 - name: string (nome brand principale, come appare nel sito)
