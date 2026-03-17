@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+:root {
+  --color-brand: #1d9e75;
+  --color-competitor: #7f77dd;
+  --color-alert: #d85a30;
+  --color-neutral-accent: #ba7517;
+  --color-bg: #f5f5f3;
+  --color-card: #ffffff;
+  --color-border: #e5e5e2;
+}
