@@ -27,7 +27,7 @@ export function Step2ReviewCategories({ state, onUpdate, onNext, onBack }: Props
   function toggleCategory(cat: string) {
     if (selectedCategories.includes(cat)) {
       onUpdate({ selectedCategories: selectedCategories.filter((c) => c !== cat) });
-    } else if (selectedCategories.length < 3) {
+    } else {
       onUpdate({ selectedCategories: [...selectedCategories, cat] });
     }
   }
@@ -47,9 +47,7 @@ export function Step2ReviewCategories({ state, onUpdate, onNext, onBack }: Props
     if (customCategory.trim() && !allCategories.includes(customCategory.trim())) {
       const newCat = customCategory.trim();
       setAllCategories([...allCategories, newCat]);
-      if (selectedCategories.length < 3) {
-        onUpdate({ selectedCategories: [...selectedCategories, newCat] });
-      }
+      onUpdate({ selectedCategories: [...selectedCategories, newCat] });
       setCustomCategory('');
     }
   }
@@ -131,7 +129,11 @@ export function Step2ReviewCategories({ state, onUpdate, onNext, onBack }: Props
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-gray-900 text-sm">Seleziona Business Categories</h3>
-            <p className="text-xs text-gray-400 mt-0.5">{selectedCategories.length}/3 selezionate</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {selectedCategories.length > 0
+                ? `${selectedCategories.length} selezionat${selectedCategories.length === 1 ? 'a' : 'e'}`
+                : 'Nessuna selezionata'}
+            </p>
           </div>
         </div>
 
@@ -140,7 +142,6 @@ export function Step2ReviewCategories({ state, onUpdate, onNext, onBack }: Props
             const color = getCategoryColor(i);
             const colorClass = COLOR_CLASSES[color];
             const isSelected = selectedCategories.includes(cat);
-            const isDisabled = !isSelected && selectedCategories.length >= 3;
 
             return (
               <label
@@ -148,15 +149,12 @@ export function Step2ReviewCategories({ state, onUpdate, onNext, onBack }: Props
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
                   isSelected
                     ? `${colorClass.bg} ${colorClass.border} border`
-                    : isDisabled
-                    ? 'border-gray-100 opacity-40 cursor-not-allowed'
                     : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
                 }`}
               >
                 <input
                   type="checkbox"
                   checked={isSelected}
-                  disabled={isDisabled}
                   onChange={() => toggleCategory(cat)}
                   className="sr-only"
                 />
