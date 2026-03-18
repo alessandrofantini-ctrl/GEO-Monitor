@@ -44,11 +44,16 @@ async function getBrandData(id: string) {
     .where(eq(categories.brandId, id))
     .orderBy(asc(categories.createdAt));
 
-  const brandSnapshots_ = await db
-    .select()
-    .from(brandSnapshots)
-    .where(eq(brandSnapshots.brandId, id))
-    .orderBy(asc(brandSnapshots.createdAt));
+  let brandSnapshots_: typeof brandSnapshots.$inferSelect[] = [];
+  try {
+    brandSnapshots_ = await db
+      .select()
+      .from(brandSnapshots)
+      .where(eq(brandSnapshots.brandId, id))
+      .orderBy(asc(brandSnapshots.createdAt));
+  } catch {
+    // table may not exist yet (migration pending)
+  }
 
   const metrics = calculateMetrics(brandReports);
   const competitors = aggregateCompetitors(brandReports);

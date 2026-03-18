@@ -83,16 +83,20 @@ export async function POST(
     const topComp = competitorsList[0]?.name ?? null;
     const uniqueLLMs = [...new Set(inserted.map((r) => r.llm))];
 
-    await db.insert(brandSnapshots).values({
-      brandId,
-      runId: run.id,
-      mentionRate: metrics.mentionRate,
-      firstPositionRate: metrics.firstPositionRate,
-      totalReports: inserted.length,
-      competitorCount: competitorsList.length,
-      topCompetitor: topComp,
-      llms: uniqueLLMs,
-    });
+    try {
+      await db.insert(brandSnapshots).values({
+        brandId,
+        runId: run.id,
+        mentionRate: metrics.mentionRate,
+        firstPositionRate: metrics.firstPositionRate,
+        totalReports: inserted.length,
+        competitorCount: competitorsList.length,
+        topCompetitor: topComp,
+        llms: uniqueLLMs,
+      });
+    } catch (snapshotErr) {
+      console.error('[reports POST] snapshot insert failed (migration pending?):', snapshotErr);
+    }
 
     return NextResponse.json({ run, reports: inserted }, { status: 201 });
   } catch (err) {
