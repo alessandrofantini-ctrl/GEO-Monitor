@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, brands } from '@/lib/db';
+import { db, brands, categories, queries } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 
 export async function GET(
@@ -10,7 +10,11 @@ export async function GET(
     const { id } = await params;
     const [brand] = await db.select().from(brands).where(eq(brands.id, id));
     if (!brand) return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
-    return NextResponse.json(brand);
+
+    const brandCategories = await db.select().from(categories).where(eq(categories.brandId, id));
+    const brandQueries = await db.select().from(queries).where(eq(queries.brandId, id)).orderBy(queries.createdAt);
+
+    return NextResponse.json({ ...brand, categories: brandCategories, queries: brandQueries });
   } catch (err) {
     return NextResponse.json({ error: 'Failed to fetch brand' }, { status: 500 });
   }

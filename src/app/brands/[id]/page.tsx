@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { db, brands, reports, queries, categories, runs } from '@/lib/db';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, asc } from 'drizzle-orm';
 import { calculateMetrics, aggregateCompetitors } from '@/features/llm-analysis/metrics';
 import { Navbar } from '@/components/ui/Navbar';
 import { MetricCard } from '@/components/ui/MetricCard';
@@ -38,10 +38,16 @@ async function getBrandData(id: string) {
     .where(eq(runs.brandId, id))
     .orderBy(desc(runs.createdAt));
 
+  const brandCategories = await db
+    .select()
+    .from(categories)
+    .where(eq(categories.brandId, id))
+    .orderBy(asc(categories.createdAt));
+
   const metrics = calculateMetrics(brandReports);
   const competitors = aggregateCompetitors(brandReports);
 
-  return { brand, reports: brandReports, queries: brandQueries, runs: brandRuns, metrics, competitors };
+  return { brand, reports: brandReports, queries: brandQueries, runs: brandRuns, categories: brandCategories, metrics, competitors };
 }
 
 export default async function BrandPage({
@@ -60,7 +66,7 @@ export default async function BrandPage({
 
   if (!data) return notFound();
 
-  const { brand, metrics, competitors, reports: brandReports, queries: brandQueries, runs: brandRuns } = data;
+  const { brand, metrics, competitors, reports: brandReports, queries: brandQueries, runs: brandRuns, categories: brandCategories } = data;
 
   return (
     <>
@@ -129,11 +135,13 @@ export default async function BrandPage({
 
         {/* Tabs */}
         <BrandDashboardTabs
+          brand={brand}
           brandId={id}
           reports={brandReports}
           queries={brandQueries}
           runs={brandRuns}
           competitors={competitors}
+          categories={brandCategories}
         />
       </main>
     </>

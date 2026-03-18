@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, brands } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 
+function normalizeUrl(url: string): string {
+  return url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase();
+}
+
 export async function GET() {
   try {
     const all = await db.select().from(brands).orderBy(brands.createdAt);
@@ -15,10 +19,23 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, url, sector, description, aliases, country, language } = body;
+    const { name, url, sector, description, aliases, country, language, force } = body;
 
     if (!name || !url || !sector) {
       return NextResponse.json({ error: 'name, url, sector are required' }, { status: 400 });
+    }
+
+    // Duplicate check (unless force: true)
+    if (!force) {
+      const normalizedInput = normalizeUrl(url);
+      const allBrands = await db.select().from(brands);
+      const existing = allBrands.find((b) => normalizeUrl(b.url) === normalizedInput);
+      if (existing) {
+        return NextResponse.json(
+          { error: 'duplicate', existingBrandId: existing.id, existingBrandName: existing.name },
+          { status: 409 }
+        );
+      }
     }
 
     const [brand] = await db

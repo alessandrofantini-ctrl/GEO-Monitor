@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getCategoryColor, COLOR_CLASSES } from '@/lib/utils';
 import type { OnboardingState } from './OnboardingWizard';
 import type { GeneratedQuery } from '@/features/brands/types';
@@ -12,12 +13,14 @@ interface Props {
 }
 
 export function Step4ReviewPrompts({ state, onUpdate, onSave }: Props) {
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
   const [newManualQuery, setNewManualQuery] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [duplicate, setDuplicate] = useState<{ id: string; name: string } | null>(null);
 
   const { queries, selectedCategories, analysis, aliases, platforms } = state;
 
@@ -55,7 +58,7 @@ export function Step4ReviewPrompts({ state, onUpdate, onSave }: Props) {
     setNewManualQuery('');
   }
 
-  async function handleSave() {
+  async function saveBrand(force = false) {
     setSaving(true);
     setError('');
 
@@ -72,8 +75,16 @@ export function Step4ReviewPrompts({ state, onUpdate, onSave }: Props) {
           aliases,
           country: state.country,
           language: state.language,
+          force,
         }),
       });
+
+      if (brandRes.status === 409) {
+        const data = await brandRes.json();
+        setDuplicate({ id: data.existingBrandId, name: data.existingBrandName });
+        setSaving(false);
+        return;
+      }
 
       if (!brandRes.ok) throw new Error('Errore nel salvataggio del brand');
       const brand = await brandRes.json();
@@ -106,6 +117,15 @@ export function Step4ReviewPrompts({ state, onUpdate, onSave }: Props) {
       setError(err instanceof Error ? err.message : 'Errore sconosciuto');
       setSaving(false);
     }
+  }
+
+  async function handleSave() {
+    await saveBrand(false);
+  }
+
+  async function handleForceSave() {
+    setDuplicate(null);
+    await saveBrand(true);
   }
 
   return (
@@ -240,6 +260,29 @@ export function Step4ReviewPrompts({ state, onUpdate, onSave }: Props) {
           })}
         </div>
       </div>
+
+      {duplicate && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          <p className="text-sm font-medium text-amber-800 mb-2">
+            <strong>{duplicate.name}</strong> è già monitorato con questo dominio.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => router.push(`/brands/${duplicate.id}`)}
+              className="text-sm px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+            >
+              Vai al brand esistente
+            </button>
+            <button
+              onClick={handleForceSave}
+              disabled={saving}
+              className="text-sm px-3 py-1.5 border border-amber-400 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
+            >
+              Crea comunque
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="text-sm text-[#D85A30] bg-[#D85A30]/5 border border-[#D85A30]/20 rounded-lg px-3 py-2">
