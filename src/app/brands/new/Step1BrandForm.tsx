@@ -46,7 +46,7 @@ export function Step1BrandForm({ state, onUpdate, onNext }: Props) {
       onUpdate({
         analysis,
         aliases: analysis.aliases ?? [],
-        selectedCategories: (analysis.categories ?? []).slice(0, 3),
+        selectedCategories: analysis.categories ?? [],
       });
       onNext();
     } catch (err) {
