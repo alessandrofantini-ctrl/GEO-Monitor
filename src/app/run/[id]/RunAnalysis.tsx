@@ -154,7 +154,10 @@ export function RunAnalysis({ brand, initialQueries }: Props) {
     setProgress(100);
 
     // Redirect after short delay with visual feedback
+    // router.refresh() invalidates the client-side router cache so the
+    // brand page re-fetches fresh data instead of serving the cached version
     setTimeout(() => {
+      router.refresh();
       router.push(`/brands/${brand.id}`);
     }, 2500);
   }
