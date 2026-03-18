@@ -46,10 +46,12 @@ export async function POST(
     }
 
     // Create a run record
+    console.log('[reports POST] inserting run for brandId:', brandId, 'llms:', llms);
     const [run] = await db
       .insert(runs)
       .values({ brandId, llms: llms ?? [], status: 'completed', completedAt: new Date() })
       .returning();
+    console.log('[reports POST] run inserted:', run.id);
 
     const toInsert = items.map((item) => {
       const isMentioned = detectMention(item.response, brandName, brandAliases);
@@ -70,7 +72,9 @@ export async function POST(
       };
     });
 
+    console.log('[reports POST] inserting', toInsert.length, 'reports for runId:', run.id);
     const inserted = await db.insert(reports).values(toInsert).returning();
+    console.log('[reports POST] reports inserted:', inserted.length);
 
     return NextResponse.json({ run, reports: inserted }, { status: 201 });
   } catch (err) {

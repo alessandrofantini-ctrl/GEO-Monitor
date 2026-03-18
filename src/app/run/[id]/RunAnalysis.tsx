@@ -129,7 +129,7 @@ export function RunAnalysis({ brand, initialQueries }: Props) {
 
     // Save results to DB
     try {
-      await fetch(`/api/brands/${brand.id}/reports`, {
+      const saveRes = await fetch(`/api/brands/${brand.id}/reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -139,8 +139,12 @@ export function RunAnalysis({ brand, initialQueries }: Props) {
           items: collected.filter((r) => r.response),
         }),
       });
-    } catch {
-      // Save error is non-blocking
+      if (!saveRes.ok) {
+        const errBody = await saveRes.text();
+        console.error('[RunAnalysis] save failed', saveRes.status, errBody);
+      }
+    } catch (err) {
+      console.error('[RunAnalysis] save error:', err);
     }
 
     setRunning(false);
