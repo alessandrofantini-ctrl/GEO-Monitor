@@ -48,13 +48,33 @@
   - `metrics.test.ts` per logica KPI pura
   - `providers.test.ts` per router LLM
 
+- [x] TASK-015 — Analisi schedulata automatica (Vercel Cron ogni lunedì)
+  - `vercel.json` con cron `0 9 * * 1`
+  - `GET /api/cron/run-scheduled` con auth Bearer `CRON_SECRET`
+  - Aggiunta colonne `scheduled_at` e `triggered_by` alla tabella `runs`
+  - Aggiunta colonne `schedule_enabled` e `schedule_frequency` alla tabella `brands`
+  - Toggle monitoraggio automatico nel tab Query della dashboard brand
+
+- [x] TASK-016 — Trend storico KPI con sparkline e delta vs run precedente
+  - Nuova tabella `brand_snapshots` salvata dopo ogni analisi
+  - Tab Storico ridisegnato: 3 card KPI con delta + sparkline SVG inline
+  - Card per ogni run con badge Manuale/Schedulato + expand inline report
+
+- [x] TASK-019 — Raccomandazioni AI nel PDF (GPT-4o basato su dati reali)
+  - `GET /api/brands/[id]/recommendations` genera 4 raccomandazioni actionable
+  - Analizza mention rate, trend, competitor, query mancanti
+  - Risposta JSON: summary + array recommendations
+
+- [x] TASK-020 — PDF professionale: executive summary + trend + raccomandazioni
+  - Pagina 1: header scuro, 4 metric card con delta, trend testuale + sparkline, raccomandazioni AI
+  - Pagina 2: competitor bar chart (max 10)
+  - Pagina 3+: tabella completa risposte LLM
+  - Export PDF chiama prima `/api/brands/[id]/recommendations` poi genera PDF
+
 ## Backlog
 
 - [ ] TASK-011 — Aggiungere NextAuth se il tool diventa pubblico (vedi ADR-0003)
 - [ ] TASK-012 — Perplexity API come provider aggiuntivo (web-native, più accurato per GEO)
-- [ ] TASK-013 — Trend chart sparkline per storico brand (recharts o chart.js)
 - [ ] TASK-014 — Notifiche Slack/email quando il mention rate scende sotto soglia
-- [ ] TASK-015 — Analisi schedulata automatica (cron job via Vercel Cron)
-- [ ] TASK-016 — Confronto between-run (delta mention rate nel tempo)
 - [ ] TASK-017 — Export CSV dei report
 - [ ] TASK-018 — Multi-lingua UI (i18n)

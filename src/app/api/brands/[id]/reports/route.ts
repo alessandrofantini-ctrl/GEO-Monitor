@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, reports, runs } from '@/lib/db';
+import { db, reports, runs, brandSnapshots } from '@/lib/db';
 import { eq, desc } from 'drizzle-orm';
-import { detectMention, detectFirstPosition } from '@/features/llm-analysis/metrics';
+import { detectMention, detectFirstPosition, calculateMetrics, aggregateCompetitors } from '@/features/llm-analysis/metrics';
 
 export async function GET(
   _req: NextRequest,
@@ -75,6 +75,24 @@ export async function POST(
     console.log('[reports POST] inserting', toInsert.length, 'reports for runId:', run.id);
     const inserted = await db.insert(reports).values(toInsert).returning();
     console.log('[reports POST] reports inserted:', inserted.length);
+
+    // WHY: ogni run produce uno snapshot KPI
+    // così il tab Storico mostra il trend nel tempo senza ricalcolare
+    const metrics = calculateMetrics(inserted);
+    const competitorsList = aggregateCompetitors(inserted);
+    const topComp = competitorsList[0]?.name ?? null;
+    const uniqueLLMs = [...new Set(inserted.map((r) => r.llm))];
+
+    await db.insert(brandSnapshots).values({
+      brandId,
+      runId: run.id,
+      mentionRate: metrics.mentionRate,
+      firstPositionRate: metrics.firstPositionRate,
+      totalReports: inserted.length,
+      competitorCount: competitorsList.length,
+      topCompetitor: topComp,
+      llms: uniqueLLMs,
+    });
 
     return NextResponse.json({ run, reports: inserted }, { status: 201 });
   } catch (err) {

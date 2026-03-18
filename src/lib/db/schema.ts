@@ -5,6 +5,7 @@ import {
   boolean,
   timestamp,
   jsonb,
+  integer,
 } from 'drizzle-orm/pg-core';
 
 export const brands = pgTable('brands', {
@@ -16,6 +17,8 @@ export const brands = pgTable('brands', {
   aliases: jsonb('aliases').$type<string[]>().default([]),
   country: text('country').default('Italy'),
   language: text('language').default('Italiano'),
+  scheduleEnabled: boolean('schedule_enabled').default(false),
+  scheduleFrequency: text('schedule_frequency').default('weekly'), // 'weekly' | 'monthly'
   createdAt: timestamp('created_at').defaultNow(),
   // WHY: nessun userId — tool interno senza autenticazione (ADR-0003)
 });
@@ -51,6 +54,8 @@ export const runs = pgTable('runs', {
     .notNull(),
   llms: jsonb('llms').$type<string[]>().default([]),
   status: text('status').notNull().default('pending'), // 'pending' | 'running' | 'completed' | 'failed'
+  scheduledAt: timestamp('scheduled_at'),
+  triggeredBy: text('triggered_by').default('manual'), // 'manual' | 'cron'
   createdAt: timestamp('created_at').defaultNow(),
   completedAt: timestamp('completed_at'),
 });
@@ -71,6 +76,21 @@ export const reports = pgTable('reports', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const brandSnapshots = pgTable('brand_snapshots', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  brandId: uuid('brand_id')
+    .references(() => brands.id, { onDelete: 'cascade' })
+    .notNull(),
+  runId: uuid('run_id').references(() => runs.id).notNull(),
+  mentionRate: integer('mention_rate').notNull(),
+  firstPositionRate: integer('first_position_rate').notNull(),
+  totalReports: integer('total_reports').notNull(),
+  competitorCount: integer('competitor_count').notNull(),
+  topCompetitor: text('top_competitor'),
+  llms: jsonb('llms').$type<string[]>().default([]),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 // Type exports for use throughout the app
 export type Brand = typeof brands.$inferSelect;
 export type NewBrand = typeof brands.$inferInsert;
@@ -82,3 +102,5 @@ export type Run = typeof runs.$inferSelect;
 export type NewRun = typeof runs.$inferInsert;
 export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
+export type BrandSnapshot = typeof brandSnapshots.$inferSelect;
+export type NewBrandSnapshot = typeof brandSnapshots.$inferInsert;
