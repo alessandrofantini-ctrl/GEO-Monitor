@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { db, reports, runs, brandSnapshots } from '@/lib/db';
 import { eq, desc } from 'drizzle-orm';
 import { detectMention, detectFirstPosition, calculateMetrics, aggregateCompetitors } from '@/features/llm-analysis/metrics';
@@ -97,6 +98,8 @@ export async function POST(
     } catch (snapshotErr) {
       console.error('[reports POST] snapshot insert failed (migration pending?):', snapshotErr);
     }
+
+    revalidatePath(`/brands/${brandId}`);
 
     return NextResponse.json({ run, reports: inserted }, { status: 201 });
   } catch (err) {
