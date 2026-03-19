@@ -256,7 +256,7 @@ export function BrandDashboardTabs({
   async function deleteBrand() {
     setDeleting(true);
     const res = await fetch(`/api/brands/${brandId}`, { method: 'DELETE' });
-    if (res.ok) router.push('/dashboard');
+    if (res.ok) { router.refresh(); router.push('/dashboard'); }
     else setDeleting(false);
   }
 

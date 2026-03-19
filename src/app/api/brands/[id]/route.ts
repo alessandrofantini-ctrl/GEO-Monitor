@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { db, brands, categories, queries } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 
@@ -46,6 +47,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     await db.delete(brands).where(eq(brands.id, id));
+    revalidatePath('/dashboard');
     return NextResponse.json({ success: true });
   } catch (err) {
     return NextResponse.json({ error: 'Failed to delete brand' }, { status: 500 });
